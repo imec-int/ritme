@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<notification xmlns="http://services.recipe.be" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://services.recipe.be
+C:\System9\sourcesApplicationServer\RecipeWebService\src\conf\XSD\20100901-recipe\notification.xsd">
+    <text xmlns="http://www.ehealth.fgov.be/standards/kmehr/schema/v1">TestjeTestje</text>
+    <kmehrmessage xmlns="http://www.ehealth.fgov.be/standards/kmehr/schema/v1" xsi:schemaLocation="http://www.ehealth.fgov.be/standards/kmehr/schema/v1
+C:\System9\sourcesApplicationServer\RecipeWebService\src\conf\XSD\20100901-recipe\kmehr-1_1.xsd" xmlns:ns2="http://www.ehealth.fgov.be/standards/kmehr/id/v1" xmlns:ns3="http://www.w3.org/2001/04/xmlenc#" xmlns:ns4="http://www.w3.org/2000/09/xmldsig#">
+        <header>
+            <standard>
+                <cd S="CD-STANDARD" SV="1.1">20100601</cd>
+            </standard>
+            <id S="ID-KMEHR" SV="1.0">3589d887-0fe7-4390-ad2b-c01078d6c978</id>
+            <date>2016-05-25</date>
+            <time>14:08:47.931+02:00</time>
+            <sender>
+                <hcparty>
+                    <id S="ID-HCPARTY" SV="1.0">71032209</id>
+                    <cd S="CD-HCPARTY" SV="1.3">orghospital</cd>
+                    <name>UZ Leuven</name>
+                </hcparty>
+            </sender>
+            <recipient>
+                <hcparty>
+                    <id S="ID-HCPARTY" SV="1.0">RECIPE</id>
+                    <cd S="CD-HCPARTY" SV="1.0">orgpublichealth</cd>
+                    <name>Recip-e</name>
+                </hcparty>
+            </recipient>
+        </header>
+        <folder>
+            <id S="ID-KMEHR" SV="1.0">1</id>
+            <patient>
+                <id S="ID-PATIENT" SV="1.0">73100906111</id>
+                <firstname>NUMMER 365</firstname>
+                <familyname>BSS OPLEIDINGPATIENT</familyname>
+                <birthdate>
+                    <date>1973-02-02</date>
+                </birthdate>
+                <sex>
+                    <cd S="CD-SEX" SV="1.0">female</cd>
+                </sex>
+            </patient>
+            <transaction>
+                <id S="ID-KMEHR" SV="1.0">1</id>
+                <cd S="CD-TRANSACTION" SV="1.1">pharmaceuticalprescription</cd>
+                <date>2016-05-25</date>
+                <time>00:00:00+02:00</time>
+                <author>
+                    <hcparty>
+                        <id S="INSS" SV="1.0">74091621351</id>
+                        <id S="ID-HCPARTY" SV="1.0">10000007999</id>
+                        <cd S="CD-HCPARTY" SV="1.3">persphysician</cd>
+                        <firstname>John</firstname>
+                        <familyname>Difool</familyname>
+                    </hcparty>
+                </author>
+                <iscomplete>true</iscomplete>
+                <isvalidated>true</isvalidated>
+                <heading>
+                    <id S="ID-KMEHR" SV="1.0">1</id>
+                    <cd S="CD-HEADING" SV="1.1">prescription</cd>
+                    <item>
+                        <id S="ID-KMEHR" SV="1.0">1</id>
+                        <cd S="CD-ITEM" SV="1.1">medication</cd>
+                        <content>
+                            <medicinalproduct>
+                                <intendedcd S="CD-DRUG-CNK" SV="2010-07">0278192</intendedcd>
+                                <intendedname>CLEXANE</intendedname>
+                            </medicinalproduct>
+                        </content>
+                        <posology>
+                            <text L="nl">1  spuit 2 per dag </text>
+                        </posology>
+                    </item>
+                </heading>
+            </transaction>
+        </folder>
+    </kmehrmessage>
+</notification>

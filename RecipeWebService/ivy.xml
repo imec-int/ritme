@@ -1,0 +1,53 @@
+<ivy-module version="2.0">
+    <info organisation="uz.domain" module="RecipeWebService"/>
+	<configurations defaultconfmapping="*->default" defaultconf="compile" confmappingoverride="true">
+        <conf name="default" transitive="true" extends="runtime"/>
+		<conf name="jboss" transitive="true" extends="runtime" />
+		<conf name="tomcat" transitive="true" extends="runtime" />
+        <conf name="provided" transitive="false" visibility="private"/>
+        <conf name="compile" transitive="false" visibility="private"/>
+        <conf name="runtime" extends="compile" transitive="true" visibility="private"/>
+        <conf name="test" extends="runtime,provided" transitive="true" visibility="private"/>
+    </configurations>
+    <publications>
+        <artifact name="recipewebservice" type="war" ext="war"/>
+    </publications>
+    <dependencies>
+        <dependency org="uz.as" name="core" rev="latest.integration" conf="compile">
+            <exclude org="org.bouncycastle" module="bcprov-jdk16"/>
+        </dependency>
+        <dependency org="uz.ehealth" name="ritme" rev="latest.integration" conf="compile"/>
+        <dependency org="uz.ehealth" name="ritmerecipe" rev="latest.integration" conf="compile"/>
+        <dependency org="uz.ehealth" name="ritmeoutbound" rev="latest.integration" conf="compile"/>
+        <dependency org="javax.ee" name="jax-rs-api" rev="1.1.1" conf="provided" />
+        <dependency org="javax.ee" name="servlet-api" rev="3.0.1" conf="provided" />
+		<dependency org="se.jiderhamn" name="classloader-leak-prevention" rev="1.7.1-patch1" conf="compile" />
+        <dependency org="com.fasterxml" name="jackson" rev="2.2.2"/>
+        <dependency org="org.apache" name="commons-lang3" rev="3.1" conf="compile"/>
+        <dependency org="org.slf4j" name="slf4j" rev="1.7.5" conf="compile;runtime->log4j"/>
+
+        <!-- @todo revisit when sources becomes more modular or changes significantly -->
+        <exclude org="be.belgium" module="*" conf="jboss"/>
+        <exclude org="com.borland" module="*" conf="jboss"/>
+        <exclude org="com.dictaphone" module="*" conf="jboss"/>
+        <exclude org="com.google" module="*" conf="jboss"/>
+        <exclude org="com.intrinsyc" module="*" conf="jboss"/>
+        <exclude org="com.klg" module="*" conf="jboss"/>
+        <exclude org="com.miglayout" module="*" conf="jboss"/>
+        <exclude org="com.sun" module="*" conf="jboss"/>
+        <exclude org="com.wildcrest" module="*" conf="jboss"/>
+        <exclude org="javax.servlet" module="servlet-api" conf="jboss"/>
+        <exclude org="javax.jms" module="*" conf="jboss"/>
+        <exclude org="javax.persistence" module="*" conf="jboss"/>
+        <exclude org="javax.xml" module="?!jaxb" conf="jboss"/>
+        <exclude org="net.java" module="?!jersey" conf="jboss"/>
+        <exclude org="org.eclipse" module="*" conf="jboss"/>
+        <exclude org="org.jfree" module="*" conf="jboss"/>
+        <exclude org="org.jpedal" module="*" conf="jboss"/>
+        <exclude org="org.mortbay" module="*" conf="jboss"/>
+        <exclude org="uz" module="uznative" conf="jboss"/>
+        <exclude org="uz" module="uzrmi" conf="jboss"/>
+        <exclude org="uz.common" module="kaartlezer" conf="jboss"/>
+        <exclude org="org.apache" module="xerces" conf="jboss"/>
+    </dependencies>
+</ivy-module>

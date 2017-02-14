@@ -1,0 +1,24 @@
+<project name="AddressbookWebService" default="bak" basedir=".">
+    <!-- set local properties for this build -->
+    <property file="mybuild.properties"/>
+    <!-- set global properties for this build -->
+    <property file="build.properties"/>
+    <!-- import common defined targets -->
+    <import file="${buildscripts.dir}/webapp-targets.xml" />
+	<!-- test install target -->
+	<target name="install-test" depends="webapp-targets.install-test">
+        <exec executable="rsync" failonerror="true">
+            <arg value="-r"/>  <!-- recursive -->
+            <arg value="-l"/>  <!-- copy links as links -->
+            <arg value="-p"/>  <!-- preserve permissions -->
+            <arg value="-t"/>  <!-- preserve mtimes -->
+            <arg value="-O"/>  <!-- no mtime syncing for directories (avoid "Not owner" errors) -->
+            <arg value="--out-format"/>
+            <arg value="playkws-jboss: %n%L: %o"/>
+            <arg value="-e"/>
+            <arg value="/usr/bin/ssh"/>
+            <arg value="${package.dir}/"/>
+            <arg value="playkws-jboss:/usr/local/jboss.uz/server/playkws-jboss/deployments"/>
+        </exec>
+    </target>
+</project>

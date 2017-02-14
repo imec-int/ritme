@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         version="3.0">
+    <!-- classloader leak preventor -->
+    <listener>
+        <listener-class>se.jiderhamn.classloader.leak.prevention.ClassLoaderLeakPreventor</listener-class>
+    </listener>
+
+    <!-- s9 filter -->
+    <filter>
+        <filter-name>S9HttpFilter</filter-name>
+        <filter-class>uz.ehealth.ritme.connector.PluginFilter</filter-class>
+        <init-param>
+            <param-name>filterClassNameProperty</param-name>
+            <param-value>ritme.outbound.authentication.user</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>S9HttpFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <filter>
+        <filter-name>RequestFilter</filter-name>
+        <filter-class>uz.ehealth.ritme.connector.RequestFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>RequestFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- jax-rs -->
+    <context-param>
+        <param-name>javax.ws.rs.core.Application</param-name>
+        <param-value>uz.as.vitalinkwebservice.rest.RestConfig</param-value>
+    </context-param>
+    <context-param>
+        <param-name>resteasy.scan.providers</param-name>
+        <param-value>true</param-value>
+    </context-param>
+
+    <servlet>
+        <servlet-name>comparisonUI</servlet-name>
+        <jsp-file>/index.jsp</jsp-file>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>comparisonUI</servlet-name>
+        <url-pattern>/comparisonUI</url-pattern>
+    </servlet-mapping>
+    <servlet>
+        <servlet-name>env</servlet-name>
+        <jsp-file>/env.jsp</jsp-file>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>env</servlet-name>
+        <url-pattern>/env</url-pattern>
+    </servlet-mapping>
+    <!-- security -->
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>Protected</web-resource-name>
+            <url-pattern>/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>*</role-name>
+        </auth-constraint>
+    </security-constraint>
+    <login-config>
+        <auth-method>BASIC</auth-method>
+        <realm-name>vitalinkwebservice</realm-name>
+    </login-config>
+    <security-role>
+        <role-name>*</role-name>
+    </security-role>
+</web-app>

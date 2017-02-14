@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.2">
+	<deployment>
+		<dependencies>
+			<module name="org.apache.xerces"/>
+		</dependencies>
+		<exclude-subsystems>
+			<subsystem name="logging" />
+			<!--subsystem name="jpa" /-->
+		</exclude-subsystems>
+		<exclusions>
+            <module name="org.slf4j" />
+            <module name="org.apache.log4j" />
+            <module name="org.apache.commons.logging" />
+            <module name="org.slf4j.jcl-over-slf4j" />
+            <module name="org.jboss.logging.jul-to-slf4j-stub" />
+		</exclusions>
+		<resources>
+			<resource-root path="WEB-INF/lib/bcprov-jdk15on-1.52.jar" use-physical-code-source="true"/>
+		</resources>
+	</deployment>
+</jboss-deployment-structure>

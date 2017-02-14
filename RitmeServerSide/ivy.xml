@@ -1,0 +1,26 @@
+<ivy-module version="2.0" xmlns:uz="http://uzleuven.be/ivy">
+    <info organisation="uz.ehealth" module="ritmeserverside"/>
+    <configurations defaultconfmapping="*->default" defaultconf="compile" confmappingoverride="true">
+        <conf name="default" transitive="true" extends="runtime"/>
+        <conf name="provided" transitive="false" visibility="private"/>
+        <conf name="compile" transitive="false" visibility="private"/>
+        <conf name="runtime" extends="compile" transitive="true" visibility="private"/>
+        <conf name="test" extends="runtime,provided" transitive="true" visibility="private"/>
+    </configurations>
+    <publications>
+        <artifact name="ritmeserverside" type="jar" ext="jar"/>
+        <artifact name="ritmeserverside" type="sources" ext="jar" uz:classifier="sources"/>
+        <artifact name="ritmeserverside" type="test-jar" ext="jar" uz:classifier="tests"/>
+    </publications>
+    <dependencies>
+        <dependency org="be.ehealth.connector" name="technical-core" rev="3.4.0-beta-9" conf="compile"/>
+        <dependency org="org.slf4j" name="slf4j" rev="1.7.5" conf="compile"/>
+        <dependency org="org.bouncycastle" name="bcprov-jdk15on" rev="1.52" conf="compile"/>
+        <dependency org="be.fgov" name="ehealth-etee" rev="2.1.1" conf="compile"/>
+        <dependency org="org.apache" name="commons-lang3" rev="3.1" conf="compile"/>
+        <dependency org="org.apache" name="commons-lang" rev="2.4" conf="compile"/>
+        <!-- test dependencies -->
+        <!--dependency org="org.junit" name="junit" rev="4.11" conf="test"/-->
+        <dependency org="org.slf4j" name="slf4j" rev="1.7.5" conf="test;runtime->log4j"/>
+    </dependencies>
+</ivy-module>

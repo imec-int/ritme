@@ -1,0 +1,3 @@
+<ser:feedback xmlns:ser="http://services.recipe.be">
+  <text>string</text>
+</ser:feedback>

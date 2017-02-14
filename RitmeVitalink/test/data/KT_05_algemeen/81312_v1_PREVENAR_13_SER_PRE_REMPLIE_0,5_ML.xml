@@ -1,0 +1,98 @@
+<kmehrmessage xmlns="http://www.ehealth.fgov.be/standards/kmehr/schema/v1"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://www.ehealth.fgov.be/standards/kmehr/schema/v1 kmehr_elements.xsd">
+    <header>
+        <standard>
+            <cd S="CD-STANDARD" SV="1.4">20120401</cd>
+        </standard>
+        <id S="ID-KMEHR" SV="1.0">17892144001.20160513134541379</id>
+        <date>2016-11-30</date>
+        <time>13:45:41</time>
+        <sender>
+            <hcparty>
+                <id S="ID-HCPARTY" SV="1.0">17892144001</id>
+                <id S="INSS" SV="1.0">75041414469</id>
+                <cd S="CD-HCPARTY" SV="1.3">perspharmacist</cd>
+                <firstname>VEERLE</firstname>
+                <familyname>MOERMANS</familyname>
+            </hcparty>
+            <hcparty>
+                <cd S="CD-HCPARTY" SV="1.3">application</cd>
+                <name>Lab</name>
+            </hcparty>
+        </sender>
+        <recipient>
+            <hcparty>
+                <cd S="CD-HCPARTY" SV="1.3">application</cd>
+                <name>VITALINK</name>
+            </hcparty>
+        </recipient>
+    </header>
+    <folder>
+        <id S="ID-KMEHR" SV="1.0">1</id>
+        <patient>
+            <id S="ID-PATIENT" SV="1.0">72071135503</id>
+            <firstname>Fo/Pa Firstname</firstname>
+            <familyname>Fo/Pa Familyname</familyname>
+            <sex>
+                <cd S="CD-SEX" SV="1.0">male</cd>
+            </sex>
+        </patient>
+        <transaction>
+            <id S="ID-KMEHR" SV="1.0">1</id>
+            <cd S="CD-TRANSACTION" SV="1.4">medicationschemeelement</cd>
+            <date>2016-06-06</date>
+            <time>16:06:06</time>
+            <author>
+                <hcparty>
+                    <id S="ID-HCPARTY" SV="1.0">17892144001</id>
+                    <cd S="CD-HCPARTY" SV="1.3">persphysician</cd>
+                    <firstname>Tr/Au Persphysician Familyname</firstname>
+                    <familyname>Ta/Au Persphysician Familyname</familyname>
+                </hcparty>
+                <hcparty>
+                    <cd S="CD-HCPARTY" SV="1.3">application</cd>
+                    <name>Tr/App Validatie Lab Tools</name>
+                </hcparty>
+            </author>
+            <iscomplete>true</iscomplete>
+            <isvalidated>true</isvalidated>
+            <item>
+                <id S="ID-KMEHR" SV="1.0">1</id>
+                <cd S="CD-ITEM" SV="1.4">healthcareelement</cd>
+                <content>
+                    <cd S="CD-ITEM-MS" SV="1.0">adaptationflag</cd>
+                    <cd S="CD-MS-ADAPTATION" SV="1.0">medication</cd>
+                </content>
+            </item>
+            <item>
+                <id S="ID-KMEHR" SV="1.0">2</id>
+                <cd S="CD-ITEM" SV="1.4">medication</cd>
+                <content>
+                    <medicinalproduct>
+                        <intendedcd S="CD-DRUG-CNK" SV="1.0">2657088</intendedcd>
+                        <intendedname>PREVENAR 13 SER PRE REMPLIE 0,5 ML</intendedname>
+                    </medicinalproduct>
+                </content>
+                <beginmoment>
+                    <date>2016-01-01</date>
+                </beginmoment>
+                <temporality>
+                    <cd S="CD-TEMPORALITY" SV="1.0">chronic</cd>
+                </temporality>
+                <frequency>
+                    <periodicity>
+                        <cd S="CD-PERIODICITY" SV="1.0">JQ</cd>
+                    </periodicity>
+                </frequency>
+                <posology>
+                    <text L="nl">op afspraak consultatie</text>
+                </posology>
+                <route>
+                    <cd S="CD-DRUG-ROUTE" SV="2.0">00013</cd>
+                </route>
+                <instructionforpatient L="nl">907</instructionforpatient>
+            </item>
+        </transaction>
+    </folder>
+</kmehrmessage>

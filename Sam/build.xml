@@ -1,0 +1,13 @@
+<project name="Ritme" default="build" basedir=".">
+
+    <!-- set local properties for this build -->
+    <property file="mybuild.properties"/>
+
+    <!-- set global properties for this build -->
+    <property file="build.properties"/>
+
+    <!-- import common defined targets -->
+    <property name="buildscripts.dir" value="${basedir}/../../buildscripts"/>
+    <import file="${buildscripts.dir}/module-targets.xml"/>
+
+</project>

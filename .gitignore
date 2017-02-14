@@ -1,2 +1,6 @@
 **/.svn
 **/.svn/**
+**/*.iml
+**/.idea
+*/build/*
+!*/build/lib

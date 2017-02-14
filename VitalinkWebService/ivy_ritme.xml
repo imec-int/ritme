@@ -23,6 +23,7 @@
         <dependency org="com.fasterxml" name="jackson" rev="2.2.2"/>
         <dependency org="org.slf4j" name="slf4j" rev="1.7.5" conf="compile->default;runtime->log4j"/>
         <dependency org="net.sf" name="Saxon-HE" rev="9.5.0.2" conf="compile"/>
+        <dependency org="org.apache" name="commons-httpclient" rev="3.0-rc4" conf="test"/>
 
 
         <!-- @todo revisit when sources becomes more modular or changes significantly -->
@@ -50,9 +51,7 @@
         <exclude org="org.apache" module="xerces" conf="jboss"/>
         <!--exclude org="uz.common" module="gui" conf="jboss"/-->
         <!--exclude org="uz.common" module="icons" conf="jboss"/-->
-        <!--exclude org="org.bouncycastle" module="*" conf="jboss"/-->
-
-        <!-- tijdelijke oplossing om bouncycastle-conflict geforceerd op v1.46 te krijgen -->
+        <exclude org="org.bouncycastle" module="bcprov-jdk16" conf="jboss"/>
         <conflict org="org.bouncycastle" module="bcprov-jdk15on" rev="1.52"/>
     </dependencies>
 </ivy-module>

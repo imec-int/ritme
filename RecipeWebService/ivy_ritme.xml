@@ -19,6 +19,7 @@
         <dependency org="javax.ee" name="servlet-api" rev="3.0.1" conf="provided"/>
         <dependency org="se.jiderhamn" name="classloader-leak-prevention" rev="1.7.1-patch1" conf="compile"/>
         <dependency org="com.fasterxml" name="jackson" rev="2.2.2"/>
+        <dependency org="org.apache" name="commons-lang3" rev="3.1" conf="compile"/>
         <dependency org="org.slf4j" name="slf4j" rev="1.7.5" conf="compile;runtime->log4j"/>
 
         <!-- @todo revisit when sources becomes more modular or changes significantly -->

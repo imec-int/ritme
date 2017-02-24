@@ -60,6 +60,12 @@
         </copy>
     </target>
 
+    <target name="prepare-git">
+        <copy todir="./web/WEB-INF/lib" overwrite="true">
+            <fileset dir="./build/lib"/>
+        </copy>
+    </target>
+
     <target name="duplicate-prod">
         <copy file="${artifacts.dir}/${war.artifact.name}.war" tofile="${artifacts.dir}/${war.artifact.name}0.war"/>
         <copy file="${artifacts.dir}/${war.artifact.name}.war" tofile="${artifacts.dir}/${war.artifact.name}1.war"/>

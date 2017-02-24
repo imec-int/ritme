@@ -27,4 +27,7 @@ public interface MedicationSchemeService extends VitalinkService {
     MedicatieSchema retrieveActualMedicationSchemeVersion(final MedicData medicData, String nihiiOrg, String subjectSsin, Date endDateAfter, List<MedicatieSchemaItemStatus> excludeStatus) throws Exception;
 
     URI saveMedicatieSchemaItem(final MedicData userData, String nihiiOrg, final HospitalData hospitalData, List<MedicatieSchemaItem> medicatieSchemaItems, final PatientData patientData, String schemaVersie) throws Exception;
+
+    @NotNull
+    public List<MedicatieSchemaItem> saveMedicatieSchemaItems(final MedicData medicData, String nihiiOrg, final HospitalData hospitalData, List<MedicatieSchemaItem> medicatieSchemaItems, final PatientData patientData, String schemaVersie) throws Exception;
 }

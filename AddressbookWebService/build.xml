@@ -45,6 +45,12 @@
         </copy>
     </target>
 
+    <target name="prepare-git">
+        <copy todir="./web/WEB-INF/lib" overwrite="true">
+            <fileset dir="./build/lib"/>
+        </copy>
+    </target>
+
     <target name="duplicate-prod">
     </target>
 

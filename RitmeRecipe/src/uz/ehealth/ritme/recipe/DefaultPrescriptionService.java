@@ -113,7 +113,7 @@ public class DefaultPrescriptionService implements PrescriptionService {
                 EncryptionUtils encryptionUtils = PluginManager.get("ritme.recipe.connector.encryption", EncryptionUtils.class, null, nihiiOrg);
 
                 commonModule.setEncryptionUtils(encryptionUtils, nihiiOrg);
-                commonModule.createFallbackSession(null, null, nihiiOrg);
+                commonModule.createFallbackSession(null, encryptionUtils.getSystemKeystorePassword(null) == null ? null : new String(encryptionUtils.getSystemKeystorePassword(null)), nihiiOrg);
 
                 module.setEncryptionUtils(encryptionUtils, nihiiOrg);
             }
@@ -247,7 +247,7 @@ public class DefaultPrescriptionService implements PrescriptionService {
                     EncryptionUtils encryptionUtils = PluginManager.get("ritme.recipe.connector.encryption", EncryptionUtils.class, null, nihiiOrg);
 
                     commonModule.setEncryptionUtils(encryptionUtils, nihiiOrg);
-                    commonModule.createFallbackSession(null, null, nihiiOrg);
+                    commonModule.createFallbackSession(null, encryptionUtils.getSystemKeystorePassword(null) == null ? null : new String(encryptionUtils.getSystemKeystorePassword(null)), nihiiOrg);
 
                     module.setEncryptionUtils(encryptionUtils, nihiiOrg);
                 }
@@ -289,7 +289,7 @@ public class DefaultPrescriptionService implements PrescriptionService {
                 EncryptionUtils encryptionUtils = PluginManager.get("ritme.recipe.connector.encryption", EncryptionUtils.class, null, nihiiOrg);
 
                 commonModule.setEncryptionUtils(encryptionUtils, nihiiOrg);
-                commonModule.createFallbackSession(null, null, nihiiOrg);
+                commonModule.createFallbackSession(null, encryptionUtils.getSystemKeystorePassword(null) == null ? null : new String(encryptionUtils.getSystemKeystorePassword(null)), nihiiOrg);
 
                 module.setEncryptionUtils(encryptionUtils, nihiiOrg);
             }
@@ -323,7 +323,7 @@ public class DefaultPrescriptionService implements PrescriptionService {
                 EncryptionUtils encryptionUtils = PluginManager.get("ritme.recipe.connector.encryption", EncryptionUtils.class, null, nihiiOrg);
 
                 commonModule.setEncryptionUtils(encryptionUtils, nihiiOrg);
-                commonModule.createFallbackSession(null, null, nihiiOrg);
+                commonModule.createFallbackSession(null, encryptionUtils.getSystemKeystorePassword(null) == null ? null : new String(encryptionUtils.getSystemKeystorePassword(null)), nihiiOrg);
 
                 module.setEncryptionUtils(encryptionUtils, nihiiOrg);
             }

@@ -19,16 +19,12 @@ import uz.ehealth.ritme.outbound.medic.MedicData;
 import uz.ehealth.ritme.outbound.patient.PatientData;
 import uz.ehealth.ritme.plugins.PluginManager;
 import uz.ehealth.ritme.sam.SamService;
-import uz.ehealth.ritme.vitalink.logic.FetchDataEntriesResponseIdentity;
-import uz.ehealth.ritme.vitalink.logic.FetchDataEntriesResponseToKmehrmessageTypes;
-import uz.ehealth.ritme.vitalink.logic.FetchDataEntriesResponseToMedicatieSchemaItems;
-import uz.ehealth.ritme.vitalink.logic.FetchDataEntriesResponseToXmls;
+import uz.ehealth.ritme.vitalink.logic.*;
 import uz.emv.sam.v1.domain.AMP;
 import uz.emv.sam.v1.domain.AMPIntermediatePackage;
 import uz.emv.sam.v1.domain.AMPP;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.*;
 
 
@@ -39,6 +35,7 @@ public class DefaultMedicationSchemeService extends DefaultVitalinkService imple
     private static final FetchDataEntriesResponseToKmehrmessageTypes FETCH_DATA_ENTRIES_RESPONSE_TO_KMEHRMESSAGE_TYPES;
     private static final FetchDataEntriesResponseToMedicatieSchemaItems FETCH_DATA_ENTRIES_RESPONSE_TO_MEDICATIE_SCHEMA_ITEMS;
     private static final FetchDataEntriesResponseIdentity FETCH_DATA_ENTRIES_IDENTITY;
+    private static final KmehrXmlToMedicatieSchemaItem KMEHR_XML_TO_MEDICATIE_SCHEMA_ITEM;
 
     static {
         LOG.debug("Starting class init");
@@ -49,6 +46,8 @@ public class DefaultMedicationSchemeService extends DefaultVitalinkService imple
         FETCH_DATA_ENTRIES_RESPONSE_TO_MEDICATIE_SCHEMA_ITEMS = new FetchDataEntriesResponseToMedicatieSchemaItems();
         LOG.debug("FETCH_DATA_ENTRIES_RESPONSE_TO_MEDICATIE_SCHEMA_ITEMS loaded");
         FETCH_DATA_ENTRIES_IDENTITY = new FetchDataEntriesResponseIdentity();
+        LOG.debug("KMEHR_XML_TO_MEDICATIE_SCHEMA_ITEM loaded");
+        KMEHR_XML_TO_MEDICATIE_SCHEMA_ITEM = new KmehrXmlToMedicatieSchemaItem();
         LOG.debug("Ending class init");
     }
 
@@ -66,20 +65,13 @@ public class DefaultMedicationSchemeService extends DefaultVitalinkService imple
         final List<byte[]> selected = new ArrayList<byte[]>();
         for (FetchDataEntriesResponse response : responses) {
             final List<byte[]> kmehrMessageTypes = FETCH_DATA_ENTRIES_RESPONSE_TO_XMLS.invoke(response);
-            Map<String, String> metadata = new HashMap<String, String>();
-            metadata.put("nihiiOrg", nihiiOrg);
-            final List<MedicatieSchemaItem> medicatieSchemaItems = FETCH_DATA_ENTRIES_RESPONSE_TO_MEDICATIE_SCHEMA_ITEMS.invoke(Pair.of(response, metadata));
-
+            final List<MedicatieSchemaItem> medicatieSchemaItems = FETCH_DATA_ENTRIES_RESPONSE_TO_MEDICATIE_SCHEMA_ITEMS.invoke(Pair.of(response, nihiiOrg));
             List<Integer> indexes = getFiltered(medicatieSchemaItems, endDateAfter, excludeStatus);
-
-
             for (Integer index : indexes) {
                 selected.add(kmehrMessageTypes.get(index));
             }
         }
-
         return selected;
-
     }
 
     @NotNull
@@ -88,21 +80,13 @@ public class DefaultMedicationSchemeService extends DefaultVitalinkService imple
         final List<KmehrmessageType> selected = new ArrayList<KmehrmessageType>();
         for (FetchDataEntriesResponse response : responses) {
             final List<KmehrmessageType> kmehrMessageTypes = FETCH_DATA_ENTRIES_RESPONSE_TO_KMEHRMESSAGE_TYPES.invoke(response);
-            Map<String, String> metadata = new HashMap<String, String>();
-            metadata.put("nihiiOrg", nihiiOrg);
-            final List<MedicatieSchemaItem> medicatieSchemaItems = FETCH_DATA_ENTRIES_RESPONSE_TO_MEDICATIE_SCHEMA_ITEMS.invoke(Pair.of(response, metadata));
-
+            final List<MedicatieSchemaItem> medicatieSchemaItems = FETCH_DATA_ENTRIES_RESPONSE_TO_MEDICATIE_SCHEMA_ITEMS.invoke(Pair.of(response, nihiiOrg));
             List<Integer> indexes = getFiltered(medicatieSchemaItems, endDateAfter, excludeStatus);
-
-
             for (Integer index : indexes) {
                 selected.add(kmehrMessageTypes.get(index));
             }
         }
-
         return selected;
-
-
     }
 
     private List<Integer> getFiltered(final List<MedicatieSchemaItem> medicatieSchemaItems, final Date endDateAfter, final List<MedicatieSchemaItemStatus> excludeStatus) {
@@ -198,19 +182,19 @@ public class DefaultMedicationSchemeService extends DefaultVitalinkService imple
         final List<MedicatieSchemaItem> selected = new ArrayList<MedicatieSchemaItem>();
         Calendar lastUpdated = null;
         int version = 0;
+        Integer nodeVersion = null;
         for (FetchDataEntriesResponse response : responses) {
             lastUpdated = (lastUpdated == null || response.getLastUpdated().compareTo(lastUpdated) > 0) ? response.getLastUpdated() : lastUpdated;
             version = response.getVersion() > version ? response.getVersion() : version;
-            Map<String, String> metadata = new HashMap<String, String>();
-            metadata.put("nihiiOrg", nihiiOrg);
-            final List<MedicatieSchemaItem> medicatieSchemaItems = FETCH_DATA_ENTRIES_RESPONSE_TO_MEDICATIE_SCHEMA_ITEMS.invoke(Pair.of(response, metadata));
+            nodeVersion = response.getNodes() != null && !response.getNodes().isEmpty() ? response.getNodes().get(0).getVersion() : null;
+            final List<MedicatieSchemaItem> medicatieSchemaItems = FETCH_DATA_ENTRIES_RESPONSE_TO_MEDICATIE_SCHEMA_ITEMS.invoke(Pair.of(response, nihiiOrg));
             List<Integer> indexes = getFiltered(medicatieSchemaItems, endDateAfter, excludeStatus);
 
             for (Integer index : indexes) {
                 selected.add(medicatieSchemaItems.get(index));
             }
         }
-        return new MedicatieSchema(version, lastUpdated == null ? null : lastUpdated.getTime(), selected);
+        return new MedicatieSchema(version, nodeVersion, lastUpdated == null ? null : lastUpdated.getTime(), selected);
     }
 
     @Override
@@ -219,17 +203,21 @@ public class DefaultMedicationSchemeService extends DefaultVitalinkService imple
         List<FetchDataEntriesResponse> responses = getVitalinkNode(medicData, nihiiOrg, subjectSsin, FETCH_DATA_ENTRIES_IDENTITY, FetchDataEntriesResponse.class, false);
         Calendar lastUpdated = null;
         int version = 0;
+        Integer nodeVersion = null;
         for (FetchDataEntriesResponse response : responses) {
             lastUpdated = (lastUpdated == null || response.getLastUpdated().compareTo(lastUpdated) > 0) ? response.getLastUpdated() : lastUpdated;
             version = response.getVersion() > version ? response.getVersion() : version;
+            nodeVersion = response.getNodes() != null && !response.getNodes().isEmpty() ? response.getNodes().get(0).getVersion() : null;
 
         }
-        return new MedicatieSchema(version, lastUpdated == null ? null : lastUpdated.getTime(), Collections.<MedicatieSchemaItem>emptyList());
+        return new MedicatieSchema(version, nodeVersion, lastUpdated == null ? null : lastUpdated.getTime(), Collections.<MedicatieSchemaItem>emptyList());
     }
 
 
+    @NotNull
     @Override
-    public URI saveMedicatieSchemaItem(final MedicData medicData, String nihiiOrg, final HospitalData hospitalData, List<MedicatieSchemaItem> medicatieSchemaItems, final PatientData patientData, String schemaVersie) throws Exception {
+    public List<MedicatieSchemaItem> saveMedicatieSchemaItems(final MedicData medicData, String nihiiOrg, final HospitalData hospitalData, List<MedicatieSchemaItem> medicatieSchemaItems, final PatientData patientData, String schemaVersie) throws Exception {
+        List<MedicatieSchemaItem> returnItems = new ArrayList<MedicatieSchemaItem>();
 
         List<MedicatieSchemaItem> cnkOfInn = new ArrayList<MedicatieSchemaItem>();
 
@@ -284,24 +272,18 @@ public class DefaultMedicationSchemeService extends DefaultVitalinkService imple
             }
         }
 
-        Map<String, Map<Medication, List<MedicatieSchemaItem>>> map = new HashMap<String, Map<Medication, List<MedicatieSchemaItem>>>();
+        Map<Medication, List<MedicatieSchemaItem>> perMedicatie = new HashMap<Medication, List<MedicatieSchemaItem>>();
+
 
         for (MedicatieSchemaItem item : cnkOfInn) {
-            Map<Medication, List<MedicatieSchemaItem>> patient = map.get(item.getPatientSSIN());
-
-            if (patient == null) {
-                patient = new HashMap<Medication, List<MedicatieSchemaItem>>();
-                map.put(item.getPatientSSIN(), patient);
-
-            }
 
             Medication currentMedication = item.getDeliveredMedication() != null ? item.getDeliveredMedication() : item.getIntendedMedication();
 
-            List<MedicatieSchemaItem> items = patient.get(currentMedication);
+            List<MedicatieSchemaItem> items = perMedicatie.get(currentMedication);
             if (items == null) {
                 items = new ArrayList<MedicatieSchemaItem>();
 
-                patient.put(currentMedication, items);
+                perMedicatie.put(currentMedication, items);
             }
 
             items.add(item);
@@ -322,161 +304,170 @@ public class DefaultMedicationSchemeService extends DefaultVitalinkService imple
         /*******************************
          * Define the values used in this example
          *******************************/
-        URI result = null;
+
         Integer nodeVersion = 0;
         StoreDataEntriesResponse response = null;
 
 
-        for (Map.Entry<String, Map<Medication, List<MedicatieSchemaItem>>> patientItems : map.entrySet()) {
+        for (Map.Entry<Medication, List<MedicatieSchemaItem>> medicatieItems : perMedicatie.entrySet()) {
 
-
-
-            for (Map.Entry<Medication, List<MedicatieSchemaItem>> medicatieItems : patientItems.getValue().entrySet()) {
-
-                String vitalinkMedicatieNr = null;
-                String vitalinkVersie = null;
-                String nodeVersie = null;
-                boolean isValidated = true;
-                for (MedicatieSchemaItem item : medicatieItems.getValue()) {
-                    isValidated = isValidated && item.isValidated();
-                    if ("Vitalink".equals(item.getSource()) && item.getUri() != null) {
-                        final String[] split = item.getUri().split("/");
-                        if (vitalinkMedicatieNr == null || vitalinkMedicatieNr.equals(split[6])) {
-                            vitalinkMedicatieNr = split[6];
-                            if (vitalinkVersie == null || Integer.valueOf(vitalinkVersie) < Integer.valueOf(split[7])) {
-                                vitalinkVersie = split[7];
-                            }
-                            if (nodeVersie == null || Integer.valueOf(nodeVersie) < Integer.valueOf(split[2])) {
-                                nodeVersie = split[2];
-                                nodeVersion = Integer.valueOf(nodeVersie);
-                            }
-                        }
-
-                    }
-                }
-
-
-                // 2. Build a medication scheme document in KMEHR format
-                byte[] kmehrMedicationScheme = new MedicatieSchemaItemsToVitalinkKmehr(medicData, hospitalData, patientData).invoke(medicatieItems.getValue()).getBytes();
-
-
-                active = (active == null) ? Boolean.TRUE : active;
-                // 3. Define the required metadata
-                Map<String, String> metadata = new HashMap<String, String>();
-                metadata.put("languageCode", "nl-BE");
-                metadata.put("availabilityStatus", active ? "active" : "ended");
-                metadata.put("formatCode", "KMEHR_20120401");
-                metadata.put("mimeType", "text/xml");
-                metadata.put("encryptionFlag", "encrypted");
-                metadata.put("validationStatus", ("persphysician".equals(medicData.getRole()) && isValidated) ? "validated" : "toBeValidated");
-
-                // 4. Define your own reference to identify the data entry during the store operation.
-                // This reference / correlationID is not saved, but is sent back in the response as a reference.
-                String reference = UUID.randomUUID().toString();
-
-                // 5. Define the nodeVersion for the dataEntry (this is required for the medication-scheme node normal flow)
-                // the nodeVersion should be taken from the retrieved dataEntry
-                if (nodeVersion == 0) {
-                    nodeVersion = Integer.valueOf(schemaVersie);
-                }
-
-
-                // 1. Create the URI
-                // The SSIN of the subject for which the data entry must be saved.
-                //String subjectID = "49030750841";
-                //73100906111
-                //todo: this is fishy
-                //String subjectID = patientItems.getKey();
-                // Build the Vitalink URI of the Data Entry to be saved.
-                String uri = "/subject/" + patientData.getSSIN() + "/medication-scheme";
-                if (vitalinkMedicatieNr == null) {
-                    uri += "/new";
-                } else {
-                    uri += "/" + vitalinkMedicatieNr + "/new/" + (Integer.valueOf(vitalinkVersie));
-                }
-
-
-                /*******************************
-                 * Build Request
-                 *******************************/
-                // Create the store data entries operation request
-                StoreDataEntriesRequest request = new StoreDataEntriesRequest(patientData.getSSIN());
-                // Create the Data Entry with URI, reference and payload (non-encrypted XML as byte array) and add the metadata
-                DataEntry dataEntry = new DataEntry(uri, kmehrMedicationScheme, reference, nodeVersion).withMetadata(metadata);
-                // Add the complete Data Entry (URI, payload, reference, metadata) to the request
-                request.getDataEntries().add(dataEntry);
-
-                pInfo.setRole(getMetaDataRole(medicData));
-                request.setPersonInformation(pInfo);
-
-                /*******************************
-                 * Send Request to Vitalink
-                 *******************************/
-                response = getVitalink().storeDataEntries(request, sessionItem);
-
-                /*******************************
-                 * Verify response
-                 *******************************/
-                // A unique message ID to track the request/response. Use this as a reference if you contact the Vitalink helpdesk.
-                LOG.info("PATIENT={},ARTS={},ZIEKENHUIS={},STATUS={}", patientData.getSSIN(), medicData.getSsin(), nihiiOrg, response.getStatus().getCode());
-
-
-                // Response should be 200, indicating that everything is OK
-                // If the response is not 200, an error has occurred.
-                if (response.getStatus().getCode() != 200) {
-                    // See the status code documentation in the cookbook for more information on the possible errors.
-                    // Most errors will be related to the Data Entry not being OK, in this example the focus is on those errors.
-
-                    // The code and message describe to problem that has occurred.
-                    int errCode = response.getStatus().getCode();
-                    String errMessage = response.getStatus().getMessage();
-                    // The software should interpret the error and take action accordingly
-                    LOG.error("Error while saving data entries for subject, code: '{}', message: '{}'", errCode, errMessage);
-
-                    if (response.getStatus().getErrors() != null) {
-                        // Retrieve the errors for each data entry
-                        for (Error error : response.getStatus().getErrors()) {
-                            // Each error will have a reference to the data entry for which the error has occurred.
-                            String subErrReference = error.getReference();
-                            // The code and message describe to problem that has occurred.
-                            int subErrCode = error.getCode();
-                            String subErrMessage = error.getMessage();
-                            // The software should interpret the error and take action accordingly
-                            LOG.error("Error while saving data entry '{}', code: '{}', message: '{}'", subErrReference, subErrCode, subErrMessage);
+            String vitalinkMedicatieNr = null;
+            String vitalinkMedicatieVersie = null;
+            boolean isValidated = true;
+            for (MedicatieSchemaItem item : medicatieItems.getValue()) {
+                isValidated = isValidated && item.isValidated();
+                if ("Vitalink".equals(item.getSource()) && item.getUri() != null) {
+                    final String[] split = item.getUri().split("/");
+                    if (vitalinkMedicatieNr == null || vitalinkMedicatieNr.equals(split[6])) {
+                        vitalinkMedicatieNr = split[6];
+                        if (vitalinkMedicatieVersie == null || Integer.valueOf(vitalinkMedicatieVersie) < Integer.valueOf(split[7])) {
+                            vitalinkMedicatieVersie = split[7];
                         }
                     }
-
-                    throw new RuntimeException(new Exception(Integer.toString(errCode), new Exception(errMessage)));
-                }
-
-
-                // The store returns URI's for each data entry that is saved
-                // The client software should save this URI as it is needed for further communication with Vitalink regarding this data entry.
-                for (DataEntry savedDataEntry : response.getDataEntries()) {
-                    // retrieve the reference and the URI for the saved data entry
-                    String ref = savedDataEntry.getReference();
-                    String dataEntryURI = savedDataEntry.getDataEntryURI();
-                    // The software should process (save) this data
-                    LOG.info("Data Entry saved! Reference: '{}', URI: '{}'", ref, dataEntryURI);
-
-                    result = URI.create(dataEntryURI);
-
                 }
             }
 
 
-        }
+            // 2. Build a medication scheme document in KMEHR format
+            byte[] kmehrMedicationScheme = new MedicatieSchemaItemsToVitalinkKmehr(medicData, hospitalData, patientData).invoke(medicatieItems.getValue()).getBytes();
 
-        if (result != null) {
-            try {
-                return new URI("/Vitalink/" + (nodeVersion + 1) + result.toString());
-            } catch (URISyntaxException e) {
-                throw new RuntimeException("500", e);
+
+            active = (active == null) ? Boolean.TRUE : active;
+            // 3. Define the required metadata
+            Map<String, String> metadata = new HashMap<String, String>();
+            metadata.put("languageCode", "nl-BE");
+            metadata.put("availabilityStatus", active ? "active" : "ended");
+            metadata.put("formatCode", "KMEHR_20120401");
+            metadata.put("mimeType", "text/xml");
+            metadata.put("encryptionFlag", "encrypted");
+            metadata.put("validationStatus", isValidated ? "validated" : "toBeValidated");
+
+            // 4. Define your own reference to identify the data entry during the store operation.
+            // This reference / correlationID is not saved, but is sent back in the response as a reference.
+            String reference = UUID.randomUUID().toString();
+
+            // 5. Define the nodeVersion for the dataEntry (this is required for the medication-scheme node normal flow)
+            // the nodeVersion should be taken from the retrieved dataEntry
+            nodeVersion = Integer.valueOf(schemaVersie);
+
+
+            // 1. Create the URI
+            // The SSIN of the subject for which the data entry must be saved.
+            // Build the Vitalink URI of the Data Entry to be saved.
+            String uri = "/subject/" + patientData.getSSIN() + "/medication-scheme";
+            if (vitalinkMedicatieNr == null) {
+                uri += "/new";
+            } else {
+                uri += "/" + vitalinkMedicatieNr + "/new/" + (Integer.valueOf(vitalinkMedicatieVersie));
             }
-        } else {
-            return null;
+
+            LOG.info("tried URI {}", "/Vitalink/" + nodeVersion + uri);
+
+
+            /*******************************
+             * Build Request
+             *******************************/
+            // Create the store data entries operation request
+            StoreDataEntriesRequest request = new StoreDataEntriesRequest(patientData.getSSIN());
+            // Create the Data Entry with URI, reference and payload (non-encrypted XML as byte array) and add the metadata
+            DataEntry dataEntry = new DataEntry(uri, kmehrMedicationScheme, reference, nodeVersion).withMetadata(metadata);
+            // Add the complete Data Entry (URI, payload, reference, metadata) to the request
+            request.getDataEntries().add(dataEntry);
+
+            pInfo.setRole(getMetaDataRole(medicData));
+            request.setPersonInformation(pInfo);
+
+            /*******************************
+             * Send Request to Vitalink
+             *******************************/
+            response = getVitalink().storeDataEntries(request, sessionItem);
+
+            /*******************************
+             * Verify response
+             *******************************/
+            // A unique message ID to track the request/response. Use this as a reference if you contact the Vitalink helpdesk.
+            LOG.info("PATIENT={},ARTS={},ZIEKENHUIS={},STATUS={}", patientData.getSSIN(), medicData.getSsin(), nihiiOrg, response.getStatus().getCode());
+
+
+            // Response should be 200, indicating that everything is OK
+            // If the response is not 200, an error has occurred.
+            if (response.getStatus().getCode() != 200) {
+                // See the status code documentation in the cookbook for more information on the possible errors.
+                // Most errors will be related to the Data Entry not being OK, in this example the focus is on those errors.
+
+                // The code and message describe to problem that has occurred.
+                int errCode = response.getStatus().getCode();
+                String errMessage = response.getStatus().getMessage();
+                // The software should interpret the error and take action accordingly
+                LOG.error("Error while saving data entries for subject, code: '{}', message: '{}'", errCode, errMessage);
+
+                if (response.getStatus().getErrors() != null) {
+                    // Retrieve the errors for each data entry
+                    for (Error error : response.getStatus().getErrors()) {
+                        // Each error will have a reference to the data entry for which the error has occurred.
+                        String subErrReference = error.getReference();
+                        // The code and message describe to problem that has occurred.
+                        int subErrCode = error.getCode();
+                        String subErrMessage = error.getMessage();
+                        // The software should interpret the error and take action accordingly
+                        LOG.error("Error while saving data entry '{}', code: '{}', message: '{}'", subErrReference, subErrCode, subErrMessage);
+                    }
+                }
+
+
+                throw new RuntimeException(new Exception(Integer.toString(errCode), new Exception(errMessage)));
+            }
+
+
+            // The store returns URI's for each data entry that is saved
+            // The client software should save this URI as it is needed for further communication with Vitalink regarding this data entry.
+            for (DataEntry savedDataEntry : response.getDataEntries()) {
+                URI result = null;
+                // retrieve the reference and the URI for the saved data entry
+                String ref = savedDataEntry.getReference();
+                String dataEntryURI = savedDataEntry.getDataEntryURI();
+                // The software should process (save) this data
+                LOG.info("Data Entry saved! Reference: '{}', URI: '{}'", ref, dataEntryURI);
+                nodeVersion = savedDataEntry.getNodeVersion();
+                try {
+                    result = URI.create("/Vitalink/" + nodeVersion + dataEntryURI);
+                    LOG.debug("result URI {}", result);
+                    /*
+                    Map<String,String> itemMetadata = new HashMap<String, String>();
+                    itemMetadata.put("uri", result.toString());
+                    itemMetadata.put("nihiiOrg", nihiiOrg);
+                    itemMetadata.put("source", "Vitalink");
+                    */
+                    //converteer businessdata naar json
+                    //zet de URI correct
+                    for (MedicatieSchemaItem item : medicatieItems.getValue()) {
+                        MedicatieSchemaItem updatedItem = new MedicatieSchemaItem(result.toString(), "Vitalink", item.getType(), item.getRegistrationDate(), item.getPatientSSIN(), item.getMedicSSIN(), item.getMedicNIHII(), item.getOrgNIHII(), item.getIntendedMedication(), item.getDeliveredMedication(), item.getDrugRoute(), item.getMedicationUse(), item.getStartDate(), item.getStopDate(), item.getBeginCondition(), item.getEndCondition(), item.getPeriodicity(), item.getRegimenItems(), item.getPosology(), item.getInstructionForPatient(), item.getInstructionForOverdosing(), item.getInstructionForReimbursement(), item.getTransactionReason(), item.isPatientOrigin(), item.isActive(), item.isValidated(), item.getSuspensions());
+                        //MedicatieSchemaItem item = KMEHR_XML_TO_MEDICATIE_SCHEMA_ITEM.invoke(Pair.of(savedDataEntry.getBusinessData(),itemMetadata));
+                        //voeg toe aan returnItems
+                        returnItems.add(updatedItem);
+                    }
+
+                } catch (IllegalArgumentException e) {
+                    //throw new RuntimeException("500", e);
+                }
+
+
+            }
         }
 
+        //voor het tegelijk saven van verschillende medicaties moeten de businessdata van de saved items aangepast worden met de nieuwe URIs
+        //als er maar 1 gesaved wordt, dan wordt alleen de URI als return value gebruikt.
+        return returnItems;
+
+    }
+
+    @Override
+    public URI saveMedicatieSchemaItem(final MedicData medicData, String nihiiOrg, final HospitalData hospitalData, List<MedicatieSchemaItem> medicatieSchemaItems, final PatientData patientData, String schemaVersie) throws Exception {
+        List<MedicatieSchemaItem> items = saveMedicatieSchemaItems(medicData, nihiiOrg, hospitalData, medicatieSchemaItems, patientData, schemaVersie);
+        if (items.isEmpty()) {
+            throw new RuntimeException("404");
+        }
+        return URI.create(items.get(0).getUri());
     }
 
     public AMPP getSmallestPackage(final Set<AMPP> ampps) {

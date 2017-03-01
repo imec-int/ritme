@@ -315,8 +315,6 @@ public class DefaultPrescriptionService implements PrescriptionService {
 
     @Override
     public void revokePrescription(final String reason, final String ssinPatient, final String rid, final String nihiiOrg, final String remoteUser) {
-        List<URI> uris = new ArrayList<URI>();
-
         try {
             if (!commonModule.hasValidSession(nihiiOrg)) {
 

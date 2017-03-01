@@ -1,5 +1,7 @@
 package uz.ehealth.ritme.vitalink;
 
+import be.ehealth.technicalconnector.config.ConfigFactory;
+import be.ehealth.technicalconnector.config.ConfigValidator;
 import be.ehealth.technicalconnector.exception.TechnicalConnectorException;
 import be.ehealth.technicalconnector.session.SessionItem;
 import be.ehealth.technicalconnector.session.SessionManager;
@@ -11,6 +13,7 @@ import uz.ehealth.ritme.plugins.PluginManager;
 public class RitmeVitalink {
     //private VitalinkServiceConcurrency vitalink = new VitalinkServiceConcurrency();
     //static because this is a cache
+    private ConfigValidator config = ConfigFactory.getConfigValidatorFor("sessionmanager.samlattribute", "sessionmanager.samlattributedesignator");
 
 
     /**
@@ -36,7 +39,11 @@ public class RitmeVitalink {
              *******************************/
 
             //Session.getInstance().createSessionEidOnly();
-            return sessionManager.createFallbackSession(null);
+            String pwd = config.getProperty("KEYSTORE_PASSWORD", null);
+            if (pwd == null) {
+                System.getProperty("KEYSTORE_PASSWORD", null);
+            }
+            return sessionManager.createFallbackSession(pwd, pwd);
         } else {
             return sessionManager.getSession();
         }

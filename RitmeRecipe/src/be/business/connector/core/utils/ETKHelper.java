@@ -1,5 +1,16 @@
 package be.business.connector.core.utils;
 
+import be.business.connector.core.domain.KgssIdentifierType;
+import be.business.connector.core.ehealth.services.KeyDepotService;
+import be.business.connector.core.ehealth.services.KeyDepotServiceImpl;
+import be.business.connector.core.exceptions.IntegrationModuleException;
+import be.business.connector.core.exceptions.IntegrationModuleRuntimeException;
+import be.fgov.ehealth.etee.crypto.encrypt.EncryptionToken;
+import be.fgov.ehealth.etee.crypto.encrypt.EncryptionTokenFactory;
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.perf4j.aop.Profiled;
+
 import java.io.InputStream;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
@@ -9,30 +20,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
-import org.perf4j.aop.Profiled;
-
-import be.business.connector.core.domain.KgssIdentifierType;
-import be.business.connector.core.ehealth.services.KeyDepotService;
-import be.business.connector.core.ehealth.services.KeyDepotServiceImpl;
-import be.business.connector.core.exceptions.IntegrationModuleException;
-import be.business.connector.core.exceptions.IntegrationModuleRuntimeException;
-import be.fgov.ehealth.etee.crypto.encrypt.EncryptionToken;
-import be.fgov.ehealth.etee.crypto.encrypt.EncryptionTokenFactory;
-
 public class ETKHelper {
 	private static final Logger LOG = Logger.getLogger(ETKHelper.class);
 	private static final String RECIPE_ID = "0823257311";
 	private static final String KGSS_ID = "0809394427";
 	//private static final String TIP_ID = "0406753266";
-	private static String PCDH_ID = "0406753266";
-	private static final String MY_ETK_PROPERTY = "MY_ETK";
+    private static String pcdhId = "0406753266";
+    private static final String MY_ETK_PROPERTY = "MY_ETK";
 	
 	private PropertyHandler propertyHandler;
 	private EncryptionUtils encryptionUtils;
 
-	private Map<String, EncryptionToken> etkCache = new HashMap<String, EncryptionToken>();
+
 	private Map<String, List<EncryptionToken>> etksCache = new HashMap<String, List<EncryptionToken>>();
 	private KeyDepotService keyDepotService= KeyDepotServiceImpl.getInstance();
 	
@@ -64,8 +63,8 @@ public class ETKHelper {
 
 	@Profiled(logFailuresSeparately = true, tag = "0.ETKHelper#getPCDH_ETK", logger = "org.perf4j.TimingLogger_Common")
 	public List<EncryptionToken> getPCDH_ETK() throws IntegrationModuleException {
-		return getEtks(KgssIdentifierType.CBE, PCDH_ID, "PCDH");
-	}
+        return getEtks(KgssIdentifierType.CBE, pcdhId, "PCDH");
+    }
 	@Profiled(logFailuresSeparately = true, tag = "0.ETKHelper#getSystemETK", logger = "org.perf4j.TimingLogger_Common")
 	public List<EncryptionToken> getSystemETK() throws IntegrationModuleException {
 		String application = "";
@@ -114,8 +113,8 @@ public class ETKHelper {
 			application = parser.getApplication();
 		}
 
-		if (identifierType == null || identifierValue == null || "".equals(identifierValue)) {
-			throw new IntegrationModuleException(I18nHelper.getLabel("error.invalid.system.certificate"));
+        if (identifierType == null || identifierValue == null || identifierValue.isEmpty()) {
+            throw new IntegrationModuleException(I18nHelper.getLabel("error.invalid.system.certificate"));
 		}
 		return getEtks(identifierType, Long.valueOf(identifierValue), application);
 	}
@@ -140,8 +139,8 @@ public class ETKHelper {
 
 	private List<EncryptionToken> getEtks(KgssIdentifierType identifierType, String identifierValue, String application) throws IntegrationModuleException {
 		String etkCacheId = identifierType + "/" + identifierValue + "/" + application;
-		if (etkCache.containsKey(etkCacheId)) {
-			LOG.info("ETK retrieved from the cache : " + etkCacheId);
+        if (etksCache.containsKey(etkCacheId)) {
+            LOG.info("ETK retrieved from the cache : " + etkCacheId);
 			return etksCache.get(etkCacheId);
 		}
 		List<EncryptionToken> encryptionTokens = getEtksFromDepot(identifierType, identifierValue, application);
@@ -151,9 +150,8 @@ public class ETKHelper {
 	
 	private List<EncryptionToken> getEtksFromDepot(KgssIdentifierType identifierType, String identifierValue, String application) throws IntegrationModuleException {
 		try {
-			List<EncryptionToken> encryptiontokens = keyDepotService.retrieveEtk(identifierType, identifierValue, application);
-			return encryptiontokens;
-		} catch (Throwable t) {
+            return keyDepotService.retrieveEtk(identifierType, identifierValue, application);
+        } catch (Throwable t) {
 			Exceptionutils.errorHandler(t);
 		}
 		return null;
@@ -161,19 +159,23 @@ public class ETKHelper {
 
 
 	public static String longToString(Long id, int numberOfDigits) {
-		if (id == null)
-			return null;
+        if (id == null) {
+            return null;
+        }
 
 		StringBuilder buffer = new StringBuilder(Long.toString(id.longValue()));
 		int delta = numberOfDigits - buffer.length();
 
-		if (delta == 0)
-			return buffer.toString();
-		if (delta < 0)
-			throw new IllegalArgumentException("numberOfDigits < input length");
-		for (; delta > 0; --delta) {
-			buffer.insert(0, "0");
-		}
+        if (delta == 0) {
+            return buffer.toString();
+        }
+        if (delta < 0) {
+            throw new IllegalArgumentException("numberOfDigits < input length");
+        }
+        while (delta > 0) {
+            buffer.insert(0, "0");
+            --delta;
+        }
 		return buffer.toString();
 	}
 
@@ -181,8 +183,8 @@ public class ETKHelper {
 		if (propertyHandler.hasProperty("default.pcdh.id")) {
 			String tmp = propertyHandler.getProperty("default.pcdh.id");
 			if (!StringUtils.equals("", tmp)) {
-				PCDH_ID = tmp;
-			}
+                pcdhId = tmp;
+            }
 		}
 	}
 

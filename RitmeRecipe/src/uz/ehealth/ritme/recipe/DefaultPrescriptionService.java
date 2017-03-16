@@ -23,6 +23,9 @@ import uz.ehealth.ritme.outbound.hospital.HospitalData;
 import uz.ehealth.ritme.outbound.hospital.HospitalService;
 import uz.ehealth.ritme.outbound.medic.MedicData;
 import uz.ehealth.ritme.outbound.medic.MedicService;
+import uz.ehealth.ritme.outbound.metrics.DefaultMetrics;
+import uz.ehealth.ritme.outbound.metrics.ElapsedTime;
+import uz.ehealth.ritme.outbound.metrics.Metrics;
 import uz.ehealth.ritme.outbound.patient.PatientData;
 import uz.ehealth.ritme.outbound.patient.PatientService;
 import uz.ehealth.ritme.plugins.PluginManager;
@@ -53,6 +56,7 @@ public class DefaultPrescriptionService implements PrescriptionService {
     private static final SamService SAM_SERVICE = PluginManager.get("ritme.sam", SamService.class);
     private static PrescriberIntegrationModuleImpl module = null;
     private static CommonIntegrationModuleImpl commonModule = null;
+    private static final Metrics METRICS = PluginManager.get("uz.ritme.outbound.metrics", Metrics.class, DefaultMetrics.class);
 
     static {
         try {
@@ -68,6 +72,7 @@ public class DefaultPrescriptionService implements PrescriptionService {
 
     @Override
     public URI createPrescription(final String remoteUser, final String patientSsin, final String nihiiOrg, final List<MedicatieVoorschriftItem> items) {
+
 
         PrescriptionType prescriptionType = PrescriptionType.P0;
         for(MedicatieVoorschriftItem item:items){
@@ -102,9 +107,9 @@ public class DefaultPrescriptionService implements PrescriptionService {
         MedicatieVoorschriftItemsToRecipeKmehr converter = new MedicatieVoorschriftItemsToRecipeKmehr(medicData, hospitalData, patientData);
 
         String xml = converter.invoke(items);
+        ElapsedTime createPrescriptionTime = METRICS.getElapsedTime();
 
-        long start = 0;
-        long stop = 0;
+
         try {
 
             if (!commonModule.hasValidSession(nihiiOrg)) {
@@ -117,22 +122,20 @@ public class DefaultPrescriptionService implements PrescriptionService {
 
                 module.setEncryptionUtils(encryptionUtils, nihiiOrg);
             }
-            start = System.currentTimeMillis();
+            createPrescriptionTime.start(this.getClass(), "timing", "remoteUser", "patientSSIN", "RID/ERROR");
             String rid = module.createPrescription(
                     true, Long.valueOf(patientSsin),
                     xml.getBytes(), prescriptionType.getCd(), nihiiOrg);
-            stop = System.currentTimeMillis();
-
-            LOG.error("Recipe timing: {} {} {} {}", remoteUser, patientSsin, (stop - start), rid);
+            createPrescriptionTime.stop(remoteUser, patientSsin, rid);
 
             return new URI("recipe:" + rid);
         } catch (IntegrationModuleException e) {
             LOG.error(e.getMessage(), e);
-            LOG.error("Recipe timing: {} {} {} {}", remoteUser, patientSsin, (stop - start), e.getMessage());
+            createPrescriptionTime.stop(remoteUser, patientSsin, e.getMessage());
             throw new RuntimeException("500", e);
         } catch (URISyntaxException e) {
             LOG.error(e.getMessage(), e);
-            LOG.error("Recipe timing: {} {} {} {}", remoteUser, patientSsin, (stop - start), e.getMessage());
+            createPrescriptionTime.stop(remoteUser, patientSsin, e.getMessage());
             throw new RuntimeException("500", e);
         }
 

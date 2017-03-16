@@ -68,11 +68,15 @@ public class PrescriberService {
     }
 
     private int createStatusCode(final Throwable e) {
-        if (e.getMessage() != null) {
-            return Integer.parseInt(e.getMessage().substring(e.getMessage().indexOf(':') + 1).trim());
-        } else {
-            return 500;
+        try {
+            if (e.getMessage() != null) {
+                return Integer.parseInt(e.getMessage().substring(e.getMessage().indexOf(':') + 1).trim());
+            }
+        } catch (Exception exc) {
+            LOG.error(exc.getMessage(), e);
         }
+        return 500;
+
     }
 
     @POST

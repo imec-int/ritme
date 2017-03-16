@@ -19,6 +19,9 @@ import be.ehealth.technicalconnector.ws.domain.GenericResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import uz.ehealth.ritme.outbound.hospital.SessionService;
+import uz.ehealth.ritme.outbound.metrics.DefaultMetrics;
+import uz.ehealth.ritme.outbound.metrics.ElapsedTime;
+import uz.ehealth.ritme.outbound.metrics.Metrics;
 import uz.ehealth.ritme.plugins.PluginManager;
 
 import javax.xml.soap.SOAPException;
@@ -32,28 +35,25 @@ public abstract class GenericWebserviceCaller {
 	}
 
 	public static <T extends Object> T callGenericWebservice(Object request, Class<?> requestType, Class<T> responseType, String endpoint, Logger logger, String serviceName, boolean addLoggingHandler, boolean addSoapFaultHandler, boolean addMustUnderstandHandler, boolean addInsurabilityHandler, final String nihiiOrg) throws IntegrationModuleException {
+		final Metrics metrics = PluginManager.get("uz.ritme.outbound.metrics", Metrics.class, DefaultMetrics.class);
 		Object response = null;
 		try {
-            long startJaxbRequest = System.currentTimeMillis();
-            String payload = JaxContextCentralizer.getInstance().toXml(requestType, request);
-            long stopJaxbRequest = System.currentTimeMillis();
-            LOG.error("Recipe jaxbRequest: " + (stopJaxbRequest - startJaxbRequest));
-            GenericRequest genericRequest = new GenericRequest();
-            long startPayload = System.currentTimeMillis();
-            genericRequest.setPayload(payload);
-            long stopPayload = System.currentTimeMillis();
-            LOG.error("Recipe payload: " + (stopPayload - startPayload));
-            genericRequest.setEndpoint(endpoint);
+			ElapsedTime startJaxbRequest = metrics.startElapsedTime(GenericWebserviceCaller.class, "jaxbRequest");
+			String payload = JaxContextCentralizer.getInstance().toXml(requestType, request);
+			startJaxbRequest.stop();
+			GenericRequest genericRequest = new GenericRequest();
+			ElapsedTime startPayload = metrics.startElapsedTime(GenericWebserviceCaller.class, "payload");
+			genericRequest.setPayload(payload);
+			startPayload.stop();
+			genericRequest.setEndpoint(endpoint);
 			//genericRequest.setSamlSecured();
-            long startGetSession = System.currentTimeMillis();
-            final SessionItem session = PluginManager.get("ritme.outbound.hospital.sessionmanager", SessionService.class).getSessionManager(nihiiOrg).getSession();
-            long stopGetSession = System.currentTimeMillis();
-            LOG.error("Recipe getSession: " + (stopGetSession - startGetSession));
-            long startCredential = System.currentTimeMillis();
-            genericRequest.setSamlSecured(session.getSAMLToken().getAssertion(), session.getHolderOfKeyCredential() );
-            long stopCredential = System.currentTimeMillis();
-            LOG.error("Recipe credential: " + (stopCredential - startCredential));
-            if (addLoggingHandler) {
+			ElapsedTime startGetSession = metrics.startElapsedTime(GenericWebserviceCaller.class, "getSession");
+			final SessionItem session = PluginManager.get("ritme.outbound.hospital.sessionmanager", SessionService.class).getSessionManager(nihiiOrg).getSession();
+			startGetSession.stop();
+			ElapsedTime startCredential = metrics.startElapsedTime(GenericWebserviceCaller.class, "credential");
+			genericRequest.setSamlSecured(session.getSAMLToken().getAssertion(), session.getHolderOfKeyCredential() );
+			startCredential.stop();
+			if (addLoggingHandler) {
 				LOG.info("LoggingHandler will be added");
 				genericRequest.getAfterSecurityHandlerChain().add(new LoggingHandler());
 			}
@@ -76,16 +76,14 @@ public abstract class GenericWebserviceCaller {
 			
 			GenericService service = GenericSessionServiceFactory.getGenericService();
 			LOG.info(serviceName + " called GenericWebservice to send message to service wiht endpoint:" + endpoint);
-			long start = System.currentTimeMillis();
+			ElapsedTime start = metrics.startElapsedTime(GenericWebserviceCaller.class, "send");
 			GenericResponse resp = service.send(genericRequest);
-			long stop = System.currentTimeMillis();
-            LOG.error("Recipe send: " + (stop - start));
-            LOG.info("GenericWebservice received a response from serice with endpoint:" + endpoint);
-            long startJaxbResponse = System.currentTimeMillis();
-            response = JaxContextCentralizer.getInstance().toObject(responseType, resp.asString());
-            long stopJaxbResponse = System.currentTimeMillis();
-            LOG.error("Recipe jaxbResponse: " + (stopJaxbResponse - startJaxbResponse));
-        } catch (TechnicalConnectorException e) {
+			start.stop();
+			LOG.info("GenericWebservice received a response from serice with endpoint:" + endpoint);
+			ElapsedTime startJaxbResponse = metrics.startElapsedTime(GenericWebserviceCaller.class, "startJaxbResponse");
+			response = JaxContextCentralizer.getInstance().toObject(responseType, resp.asString());
+			startJaxbResponse.stop();
+		} catch (TechnicalConnectorException e) {
 			LOG.error("TechnicalConnectorException generic webservice", e);
 			String eHealthMessage = e.getLocalizedMessage();
 			if (e.getCause() != null && StringUtils.isNotEmpty(e.getCause().getLocalizedMessage())) {

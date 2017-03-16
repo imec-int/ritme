@@ -30,9 +30,17 @@ public class PluginManager {
     }
 
     public static <T> T get(String property, Class<T> clazz) {
+        return get(property, clazz, (Class<? extends T>) null);
+    }
+
+    public static <T> T get(String property, Class<T> clazz, Class<? extends T> defaultClazz) {
+        return get(property, clazz, defaultClazz != null ? defaultClazz.getCanonicalName() : null);
+    }
+
+    public static <T> T get(String property, Class<T> clazz, String defaultClazzName) {
         Object retVal = CACHE.get(property);
         if (retVal == null) {
-            String resolvedProperty = PROPERTIES.getProperty(property);
+            String resolvedProperty = PROPERTIES.getProperty(property, defaultClazzName);
             try {
                 retVal = clazz.getClass().forName(resolvedProperty).newInstance();
                 CACHE.put(property, retVal);

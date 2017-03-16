@@ -6,7 +6,7 @@
 		</dependencies>
 		<exclude-subsystems>
 			<subsystem name="logging" />
-			<!--subsystem name="jpa" /-->
+			<subsystem name="jpa"/>
 		</exclude-subsystems>
 		<exclusions>
             <module name="org.slf4j" />

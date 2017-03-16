@@ -38,7 +38,7 @@
         <exclude org="com.wildcrest" module="*" conf="jboss"/>
         <exclude org="javax.servlet" module="servlet-api" conf="jboss"/>
         <exclude org="javax.jms" module="*" conf="jboss"/>
-        <exclude org="javax.persistence" module="*" conf="jboss"/>
+        <!--exclude org="javax.persistence" module="*" conf="jboss"/-->
         <exclude org="javax.xml" module="?!jaxb" conf="jboss"/>
         <exclude org="net.java" module="?!jersey" conf="jboss"/>
         <exclude org="org.eclipse" module="*" conf="jboss"/>

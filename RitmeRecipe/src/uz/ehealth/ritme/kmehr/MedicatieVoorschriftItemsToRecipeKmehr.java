@@ -133,7 +133,7 @@ public class MedicatieVoorschriftItemsToRecipeKmehr implements F1<List<Medicatie
         for (int count = 0; count < source.size(); count++)
         {
             final MedicatieVoorschriftItem item = source.get(count);
-            heading.getItem().add(createMedicationItem(Collections.singletonList(item.getMedicatieSchemaItem()), BigDecimal.valueOf(item.getQuantity()), count + 1));
+            heading.getItem().add(createMedicationItem(Collections.singletonList(item.getMedicatieSchemaItem()), BigDecimal.valueOf(item.getQuantity()), count + 1, item.getExecutionDate() == null ? item.getPrescriptionDate() : item.getExecutionDate()));
 
         }
         
@@ -141,7 +141,7 @@ public class MedicatieVoorschriftItemsToRecipeKmehr implements F1<List<Medicatie
         
     }
 
-    private static ItemType createMedicationItem(final List<MedicatieSchemaItem> source, final BigDecimal quantity, final int count) {
+    private static ItemType createMedicationItem(final List<MedicatieSchemaItem> source, final BigDecimal quantity, final int count, final Date executionDate) {
         ItemType itemType = new ItemType();
         final Regimen regimen = new Regimen();
 
@@ -181,6 +181,9 @@ public class MedicatieVoorschriftItemsToRecipeKmehr implements F1<List<Medicatie
                 if (item.getStopDate() != null) {
                     itemType.setEndmoment(createMomentType(item.getStopDate()));
                 }
+		        if (executionDate != null) {
+		            itemType.setDeliverydate(new DateTime(executionDate));
+		        }
                 if (item.getDrugRoute() != null) {
                     itemType.setRoute(createRoute(item.getDrugRoute()));
                 }
